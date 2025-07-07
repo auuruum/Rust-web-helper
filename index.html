@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Web Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #181a1b; color: #f1f1f1; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #23272a; border-radius: 12px; box-shadow: 0 2px 12px #0008; padding: 32px; }
+        img { width: 100%; border-radius: 8px; margin-bottom: 20px; }
+        h1 { font-size: 2em; margin-bottom: 10px; }
+        p { white-space: pre-line; margin-bottom: 20px; }
+        .buttons { display: flex; gap: 16px; }
+        button { background: #7289da; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-size: 1em; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #5b6eae; }
+        .copied { color: #43b581; margin-left: 10px; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="server-img" src="" alt="Server Image" style="display:none;">
+        <h1 id="server-title">⏳ Loading...</h1>
+        <p id="server-desc"></p>
+        <div id="pop-info" style="margin-bottom:12px; font-size:1.5em; font-weight:bold; color:#43b581; text-align:center; letter-spacing:1px; text-shadow:0 2px 8px #000a;"></div>
+        <div id="time-info" style="margin-bottom:24px; font-size:1.5em; font-weight:bold; color:#f9d923; text-align:center; letter-spacing:1px; text-shadow:0 2px 8px #000a;"></div>
+        <div class="buttons">
+            <button id="discord-btn">💬 Open website</button>
+            <button id="copy-btn">🔗 Copy Connect</button>
+            <span id="copied-msg" class="copied" style="display:none;">✅ Copied!</span>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://79.76.49.48:8074/1134548581378961473';
+        const titleEl = document.getElementById('server-title');
+        const descEl = document.getElementById('server-desc');
+        const imgEl = document.getElementById('server-img');
+        const discordBtn = document.getElementById('discord-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const copiedMsg = document.getElementById('copied-msg');
+        const popInfo = document.getElementById('pop-info');
+        const timeInfo = document.getElementById('time-info');
+        let lastData = null;
+
+        async function fetchServerInfo() {
+            try {
+                const [serverRes, popRes, timeRes] = await Promise.all([
+                    fetch(API_URL),
+                    fetch(API_URL + '/pop'),
+                    fetch(API_URL + '/time')
+                ]);
+                if (!serverRes.ok) throw new Error('Network error');
+                const data = await serverRes.json();
+                if (!data.server) throw new Error('No server data');
+                if (JSON.stringify(data) !== JSON.stringify(lastData)) {
+                    updateUI(data.server);
+                    lastData = data;
+                }
+                if (popRes.ok) {
+                    const pop = await popRes.json();
+                    updatePop(pop);
+                } else {
+                    popInfo.textContent = '';
+                }
+                if (timeRes.ok) {
+                    const time = await timeRes.json();
+                    updateTime(time);
+                } else {
+                    timeInfo.textContent = '';
+                }
+            } catch (e) {
+                titleEl.textContent = 'Failed to load server info';
+                descEl.textContent = '';
+                imgEl.style.display = 'none';
+                popInfo.textContent = '';
+                timeInfo.textContent = '';
+            }
+        }
+
+        function updateTime(time) {
+            if (time && time.currentTimeFormatted) {
+                let nextLabel = '';
+                if (time.timeTillChange) {
+                    if (time.isDay) {
+                        nextLabel = ` | 🌙 Night in ${time.timeTillChange}`;
+                    } else {
+                        nextLabel = ` | ☀️ Day in ${time.timeTillChange}`;
+                    }
+                }
+                timeInfo.textContent = `⏰ Time: ${time.currentTimeFormatted}${nextLabel}`;
+            } else {
+                timeInfo.textContent = '';
+            }
+        }
+
+        function updatePop(pop) {
+            if (pop && typeof pop.currentPlayers === 'number') {
+                let queue = pop.queuedPlayers ? ` | ⏳ Queue: ${pop.queuedPlayers}` : '';
+                popInfo.textContent = `👥 Players: ${pop.currentPlayers} / ${pop.maxPlayers}${queue}`;
+            } else {
+                popInfo.textContent = '';
+            }
+        }
+
+        function updateUI(server) {
+            titleEl.textContent = `${server.title || 'No Title'}`;
+            descEl.textContent = `${server.description || ''}`;
+            if (server.img) {
+                imgEl.src = server.img;
+                imgEl.style.display = '';
+            } else {
+                imgEl.style.display = 'none';
+            }
+            discordBtn.onclick = () => {
+                if (server.url) window.open(server.url, '_blank');
+            };
+            copyBtn.onclick = () => {
+                if (server.connect) {
+                    navigator.clipboard.writeText(server.connect).then(() => {
+                        copiedMsg.style.display = '';
+                        setTimeout(() => copiedMsg.style.display = 'none', 1500);
+                    });
+                }
+            };
+        }
+
+        fetchServerInfo();
+        setInterval(fetchServerInfo, 60000);
+    </script>
+</body>
+</html>
