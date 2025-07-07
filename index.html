@@ -114,7 +114,6 @@
 <body>
     <div class="scaler-wrapper">
         <div class="container">
-            <img id="server-img" src="" alt="Server Image" style="display:none;">
             <h1 id="server-title">⏳ Loading...</h1>
             <p id="server-desc"></p>
             <div id="pop-info" style="margin-bottom:12px; font-size:1.5em; font-weight:bold; color:#43b581; text-align:center; letter-spacing:1px; text-shadow:0 2px 8px #000a;"></div>
@@ -151,7 +150,7 @@
         const API_URL = 'https://aurumoracle2.duckdns.org/1134548581378961473';
         const titleEl = document.getElementById('server-title');
         const descEl = document.getElementById('server-desc');
-        const imgEl = document.getElementById('server-img');
+        // const imgEl = document.getElementById('server-img');
         const discordBtn = document.getElementById('discord-btn');
         const copyBtn = document.getElementById('copy-btn');
         const copiedMsg = document.getElementById('copied-msg');
@@ -188,7 +187,7 @@
             } catch (e) {
                 titleEl.textContent = 'Failed to load server info';
                 descEl.textContent = '';
-                imgEl.style.display = 'none';
+                // imgEl.style.display = 'none';
                 popInfo.textContent = '';
                 timeInfo.textContent = '';
             }
@@ -222,15 +221,7 @@
         function updateUI(server) {
             titleEl.textContent = `${server.title || 'No Title'}`;
             descEl.textContent = `${server.description || ''}`;
-            if (server.img) {
-                imgEl.onerror = () => {
-                    imgEl.style.display = 'none';
-                };
-                imgEl.src = server.img;
-                imgEl.style.display = '';
-            } else {
-                imgEl.style.display = 'none';
-            }
+            // Image handling removed
             discordBtn.onclick = () => {
                 if (server.url) window.open(server.url, '_blank');
             };
